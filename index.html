@@ -562,7 +562,7 @@ body {
   cursor: pointer; transition: var(--transition);
 }
 .hold-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-.hold-card-header { display: flex; justify-content:space-between; margin-bottom: 12px; }
+.hold-card-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
 .hold-card-title { font-size: 15px; font-weight: 700; }
 .hold-card-time { font-size: 12px; color: var(--text-tertiary); }
 .hold-card-items { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
@@ -644,28 +644,6 @@ body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .slide-up { animation: slideUp 0.4s ease; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-
-/* PRINT STYLES - FIXED */
-@media print {
-  body * {
-    visibility: hidden !important;
-  }
-  #receiptPrint, #receiptPrint * {
-    visibility: visible !important;
-  }
-  #receiptPrint {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    display: block !important;
-    background: white !important;
-  }
-  @page {
-    margin: 0;
-    size: auto;
-  }
-}
 </style>
 </head>
 <body>
@@ -822,7 +800,7 @@ body {
       <h2 style="font-size:24px;font-weight:800;margin-bottom:24px;">📊 Dashboard</h2>
       <div class="dashboard-stats">
         <div class="stat-card">
-          <div class="stat-icon" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);">💰</div>
+          <div class="stat-icon" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);"></div>
           <div class="stat-value" id="dashRevenue">Rp 0</div>
           <div class="stat-label">Pendapatan Hari Ini</div>
         </div>
@@ -887,7 +865,7 @@ body {
     </div>
 
     <div class="page" id="pageSettings">
-      <h2 style="font-size:24px;font-weight:800;margin-bottom:24px;">⚙️ Pengaturan</h2>
+      <h2 style="font-size:24px;font-weight:800;margin-bottom:24px;">️ Pengaturan</h2>
       <div class="settings-section">
         <h4>🏪 Informasi Restoran</h4>
         <div class="form-group">
@@ -921,14 +899,14 @@ body {
         </div>
       </div>
       <div class="settings-section">
-        <h4>🗄️ Database</h4>
+        <h4>️ Database</h4>
         <div class="setting-row">
           <div><strong>Export Data</strong><br><small style="color:var(--text-tertiary)">Download semua transaksi</small></div>
           <button class="btn btn-success" onclick="exportData()">📥 Export JSON</button>
         </div>
         <div class="setting-row">
           <div><strong>Reload Produk</strong><br><small style="color:var(--text-tertiary)">Ambil ulang dari Google Sheet</small></div>
-          <button class="btn btn-primary" onclick="loadProductsFromSheet()">🔄 Reload</button>
+          <button class="btn btn-primary" onclick="loadProductsFromSheet()"> Reload</button>
         </div>
         <div class="setting-row">
           <div><strong>Hapus Semua Data</strong><br><small style="color:var(--text-tertiary)">Reset localStorage</small></div>
@@ -1051,7 +1029,7 @@ body {
 <div class="modal-overlay" id="addMemberModal">
   <div class="modal" style="max-width:420px;">
     <div class="modal-header">
-      <h3>➕ Tambah Member</h3>
+      <h3> Tambah Member</h3>
       <button class="modal-close" onclick="closeModal('addMemberModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="modal-body">
@@ -1070,9 +1048,6 @@ body {
     </div>
   </div>
 </div>
-
-<!-- Hidden receipt div untuk print -->
-<div id="receiptPrint" style="display:none; position:fixed; left:0; top:0; z-index:99999; background:white;"></div>
 
 <script>
 const SHEET_ID = '18SxUVyZMAl0WwTnziBr1aBnkPNWltZZ42OGznnFJ2wU';
@@ -1287,7 +1262,7 @@ function renderProducts() {
   }
 
   grid.innerHTML = filtered.map(p => {
-    const emoji = categoryIcons[p.KATEGORI] || '🍽️';
+    const emoji = categoryIcons[p.KATEGORI] || '️';
     const cls = categoryClassMap[p.KATEGORI] || 'sayur';
     const price = p.HARGA ? formatRp(p.HARGA) : 'Hubungi Kasir';
     const fotoUrl = p['LINK FOTO'] || p.LINK_FOTO || '';
@@ -1646,7 +1621,7 @@ function processPayment() {
   showToast(`Pembayaran berhasil! ${invoice}`, 'success');
 }
 
-// === FIXED PRINT FUNCTION - LANGSUNG MUNCUL DIALOG PRINT ===
+// === FIXED PRINT FUNCTION - PAKAI WINDOW BARU ===
 function printReceipt(tx) {
   const size = settings.receiptSize || '58';
   const width = size === '80' ? '80mm' : '58mm';
@@ -1662,8 +1637,8 @@ function printReceipt(tx) {
     </div>
   `).join('');
 
-  const receiptHTML = `
-    <div style="width:${width}; padding:3mm; font-family:'Courier New',monospace; font-size:11px; color:#000;">
+  const receiptContent = `
+    <div style="width:${width}; padding:3mm; font-family:'Courier New',monospace; font-size:11px; color:#000; margin:0 auto;">
       <div style="text-align:center; margin-bottom:6px;">
         <div style="font-size:13px; font-weight:bold;">${settings.restoName}</div>
         <div style="font-size:9px;">${settings.restoAddress}</div>
@@ -1697,20 +1672,52 @@ function printReceipt(tx) {
     </div>
   `;
 
-  // Tampilkan struk di hidden div
-  const receiptDiv = document.getElementById('receiptPrint');
-  receiptDiv.innerHTML = receiptHTML;
-  receiptDiv.style.display = 'block';
-
-  // Langsung panggil print - browser akan buka dialog print
-  setTimeout(() => {
-    window.print();
-    
-    // Sembunyikan lagi setelah print
-    setTimeout(() => {
-      receiptDiv.style.display = 'none';
-    }, 1000);
-  }, 300);
+  // Buka window baru KHUSUS untuk struk
+  const printWindow = window.open('', '_blank', 
+    `width=${size === '80' ? '400' : '300'},height=600,scrollbars=no,menubar=no,toolbar=no`);
+  
+  if (printWindow) {
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Print Receipt - ${tx.invoice}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          @page { 
+            size: ${width} auto; 
+            margin: 0;
+          }
+          @media print {
+            body { 
+              margin: 0;
+              padding: 0;
+            }
+          }
+          body { 
+            margin: 0;
+            padding: 0;
+            background: white;
+          }
+        </style>
+      </head>
+      <body>
+        ${receiptContent}
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        <\/script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+  } else {
+    showToast('Popup blocker aktif! Izinkan popup untuk print', 'error');
+  }
 }
 
 function reprintReceipt(invoice) {
