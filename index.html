@@ -706,7 +706,7 @@ body {
       </div>
       <div class="topbar-right">
         <select class="table-selector" id="tableSelector">
-          <option value="">🪑 Pilih Meja</option>
+          <option value=""> Pilih Meja</option>
           <option value="1">Meja 1</option>
           <option value="2">Meja 2</option>
           <option value="3">Meja 3</option>
@@ -791,7 +791,7 @@ body {
             <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
             BAYAR SEKARANG
           </button>
-          <button class="hold-btn" onclick="holdOrder()">⏸️ HOLD ORDER</button>
+          <button class="hold-btn" onclick="holdOrder()">️ HOLD ORDER</button>
         </div>
       </div>
     </div>
@@ -800,7 +800,7 @@ body {
       <h2 style="font-size:24px;font-weight:800;margin-bottom:24px;">📊 Dashboard</h2>
       <div class="dashboard-stats">
         <div class="stat-card">
-          <div class="stat-icon" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);"></div>
+          <div class="stat-icon" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);">💰</div>
           <div class="stat-value" id="dashRevenue">Rp 0</div>
           <div class="stat-label">Pendapatan Hari Ini</div>
         </div>
@@ -867,7 +867,7 @@ body {
     <div class="page" id="pageSettings">
       <h2 style="font-size:24px;font-weight:800;margin-bottom:24px;">️ Pengaturan</h2>
       <div class="settings-section">
-        <h4>🏪 Informasi Restoran</h4>
+        <h4> Informasi Restoran</h4>
         <div class="form-group">
           <label class="form-label">Nama Restoran</label>
           <input type="text" class="form-input" id="setRestoName" value="BENHIL JAYA SEAFOOD ANYER">
@@ -906,7 +906,7 @@ body {
         </div>
         <div class="setting-row">
           <div><strong>Reload Produk</strong><br><small style="color:var(--text-tertiary)">Ambil ulang dari Google Sheet</small></div>
-          <button class="btn btn-primary" onclick="loadProductsFromSheet()"> Reload</button>
+          <button class="btn btn-primary" onclick="loadProductsFromSheet()">🔄 Reload</button>
         </div>
         <div class="setting-row">
           <div><strong>Hapus Semua Data</strong><br><small style="color:var(--text-tertiary)">Reset localStorage</small></div>
@@ -1029,7 +1029,7 @@ body {
 <div class="modal-overlay" id="addMemberModal">
   <div class="modal" style="max-width:420px;">
     <div class="modal-header">
-      <h3> Tambah Member</h3>
+      <h3>➕ Tambah Member</h3>
       <button class="modal-close" onclick="closeModal('addMemberModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="modal-body">
@@ -1262,7 +1262,7 @@ function renderProducts() {
   }
 
   grid.innerHTML = filtered.map(p => {
-    const emoji = categoryIcons[p.KATEGORI] || '️';
+    const emoji = categoryIcons[p.KATEGORI] || '🍽️';
     const cls = categoryClassMap[p.KATEGORI] || 'sayur';
     const price = p.HARGA ? formatRp(p.HARGA) : 'Hubungi Kasir';
     const fotoUrl = p['LINK FOTO'] || p.LINK_FOTO || '';
@@ -1621,7 +1621,7 @@ function processPayment() {
   showToast(`Pembayaran berhasil! ${invoice}`, 'success');
 }
 
-// === FIXED PRINT FUNCTION - PAKAI WINDOW BARU ===
+// === PRINT FUNCTION - METODE IFRAME (PALING RELIABLE) ===
 function printReceipt(tx) {
   const size = settings.receiptSize || '58';
   const width = size === '80' ? '80mm' : '58mm';
@@ -1637,87 +1637,81 @@ function printReceipt(tx) {
     </div>
   `).join('');
 
-  const receiptContent = `
-    <div style="width:${width}; padding:3mm; font-family:'Courier New',monospace; font-size:11px; color:#000; margin:0 auto;">
-      <div style="text-align:center; margin-bottom:6px;">
-        <div style="font-size:13px; font-weight:bold;">${settings.restoName}</div>
-        <div style="font-size:9px;">${settings.restoAddress}</div>
-        <div style="font-size:9px;">Telp: ${settings.restoPhone}</div>
-      </div>
-      <div style="border-top:1px dashed #000; margin:3px 0;"></div>
+  const receiptHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Struk ${tx.invoice}</title>
+      <style>
+        @page { size: ${width} auto; margin: 0; }
+        body { 
+          width: ${width}; 
+          margin: 0; 
+          padding: 3mm; 
+          font-family: 'Courier New', Courier, monospace; 
+          font-size: 11px; 
+          color: #000; 
+          background: #fff;
+        }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .line { border-top: 1px dashed #000; margin: 3px 0; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+      </style>
+    </head>
+    <body>
+      <div class="center bold" style="font-size:13px;">${settings.restoName}</div>
+      <div class="center" style="font-size:9px;">${settings.restoAddress}</div>
+      <div class="center" style="font-size:9px;">Telp: ${settings.restoPhone}</div>
+      <div class="line"></div>
       <div style="font-size:10px;">No: ${tx.invoice}</div>
       <div style="font-size:10px;">${tx.dateStr} ${tx.timeStr}</div>
       <div style="font-size:10px;">Meja: ${tx.table}</div>
-      <div style="border-top:1px dashed #000; margin:3px 0;"></div>
+      <div class="line"></div>
       ${itemsHtml}
-      <div style="border-top:1px dashed #000; margin:3px 0;"></div>
-      <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;">
-        <span>TOTAL</span>
-        <span>${formatRp(tx.total)}</span>
+      <div class="line"></div>
+      <div class="row bold" style="font-size:12px;"><span>TOTAL</span><span>${formatRp(tx.total)}</span></div>
+      <div class="line"></div>
+      <div class="row" style="font-size:10px;"><span>Bayar (${tx.paymentMethod})</span><span>${formatRp(tx.cashReceived)}</span></div>
+      ${tx.paymentMethod === 'CASH' ? `<div class="row" style="font-size:10px;"><span>Kembali</span><span>${formatRp(tx.change)}</span></div>` : ''}
+      <div class="line"></div>
+      <div class="center" style="margin-top:6px; font-size:10px;">
+        <div class="bold">Terima Kasih!</div>
       </div>
-      <div style="display:flex; justify-content:space-between; font-size:10px; margin-top:2px;">
-        <span>Bayar (${tx.paymentMethod})</span>
-        <span>${formatRp(tx.cashReceived)}</span>
-      </div>
-      ${tx.paymentMethod === 'CASH' ? `
-      <div style="display:flex; justify-content:space-between; font-size:10px;">
-        <span>Kembali</span>
-        <span>${formatRp(tx.change)}</span>
-      </div>
-      ` : ''}
-      <div style="border-top:1px dashed #000; margin:3px 0;"></div>
-      <div style="text-align:center; margin-top:6px; font-size:10px;">
-        <div>Terima Kasih!</div>
-      </div>
-    </div>
+    </body>
+    </html>
   `;
 
-  // Buka window baru KHUSUS untuk struk
-  const printWindow = window.open('', '_blank', 
-    `width=${size === '80' ? '400' : '300'},height=600,scrollbars=no,menubar=no,toolbar=no`);
-  
-  if (printWindow) {
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Print Receipt - ${tx.invoice}</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          @page { 
-            size: ${width} auto; 
-            margin: 0;
-          }
-          @media print {
-            body { 
-              margin: 0;
-              padding: 0;
-            }
-          }
-          body { 
-            margin: 0;
-            padding: 0;
-            background: white;
-          }
-        </style>
-      </head>
-      <body>
-        ${receiptContent}
-        <script>
-          window.onload = function() {
-            setTimeout(function() {
-              window.print();
-            }, 300);
-          };
-        <\/script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-  } else {
-    showToast('Popup blocker aktif! Izinkan popup untuk print', 'error');
-  }
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.style.visibility = 'hidden';
+  document.body.appendChild(iframe);
+
+  const iframeDoc = iframe.contentWindow.document;
+  iframeDoc.open();
+  iframeDoc.write(receiptHTML);
+  iframeDoc.close();
+
+  iframe.onload = function() {
+    setTimeout(() => {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch(e) {
+        console.error('Print error:', e);
+      }
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 1500);
+    }, 300);
+  };
 }
 
 function reprintReceipt(invoice) {
