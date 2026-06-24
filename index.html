@@ -1621,7 +1621,7 @@ function processPayment() {
   showToast(`Pembayaran berhasil! ${invoice}`, 'success');
 }
 
-// === PRINT FUNCTION - METODE IFRAME (PALING RELIABLE) ===
+// === PRINT FUNCTION - SIMPLE & RELIABLE ===
 function printReceipt(tx) {
   const size = settings.receiptSize || '58';
   const width = size === '80' ? '80mm' : '58mm';
@@ -1637,43 +1637,49 @@ function printReceipt(tx) {
     </div>
   `).join('');
 
-  // Buat iframe tersembunyi
-  let iframe = document.getElementById('printIframe');
-  if (!iframe) {
-    iframe = document.createElement('iframe');
-    iframe.id = 'printIframe';
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    iframe.style.visibility = 'hidden';
-    document.body.appendChild(iframe);
-  }
-
-  const receiptContent = `
+  const receiptHTML = `
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Print Receipt</title>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Struk ${tx.invoice}</title>
       <style>
-        @page { size: ${width} auto; margin: 0; }
+        @media print {
+          @page { size: ${width} auto; margin: 0; }
+          body { margin: 0; padding: 3mm; }
+          .no-print { display: none; }
+        }
         body { 
           width: ${width};
-          margin: 0;
+          margin: 0 auto;
           padding: 3mm;
           font-family: 'Courier New', Courier, monospace;
           font-size: 11px;
           color: #000;
+          background: #fff;
         }
         .center { text-align: center; }
         .bold { font-weight: bold; }
         .line { border-top: 1px dashed #000; margin: 3px 0; }
         .row { display: flex; justify-content: space-between; }
+        .btn-print {
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          padding: 10px 20px;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 14px;
+          cursor: pointer;
+          z-index: 9999;
+        }
       </style>
     </head>
     <body>
+      <button class="btn-print no-print" onclick="window.print()">🖨️ CETAK STRUK</button>
       <div class="center bold" style="font-size:13px;">${settings.restoName}</div>
       <div class="center" style="font-size:9px;">${settings.restoAddress}</div>
       <div class="center" style="font-size:9px;">Telp: ${settings.restoPhone}</div>
@@ -1693,32 +1699,26 @@ function printReceipt(tx) {
         <div class="bold">Terima Kasih!</div>
       </div>
       <script>
-        window.onload = function() {
+        // Auto trigger print setelah halaman load
+        window.addEventListener('load', function() {
           setTimeout(function() {
             window.print();
-          }, 100);
-        };
+          }, 500);
+        });
       <\/script>
     </body>
     </html>
   `;
 
-  // Tulis content ke iframe
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(receiptContent);
-  doc.close();
-
-  // Trigger print setelah iframe loaded
-  setTimeout(() => {
-    try {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-    } catch(e) {
-      console.error('Print error:', e);
-      showToast('Gagal print. Coba manual Ctrl+P', 'error');
-    }
-  }, 300);
+  // Buka di tab/window baru
+  const printWindow = window.open('', '_blank', 'width=400,height=600');
+  if (printWindow) {
+    printWindow.document.write(receiptHTML);
+    printWindow.document.close();
+  } else {
+    // Fallback: tampilkan alert jika popup diblokir
+    alert('Popup diblokir! Izinkan popup untuk website ini agar bisa print.');
+  }
 }
 
 function reprintReceipt(invoice) {
