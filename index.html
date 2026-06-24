@@ -706,7 +706,7 @@ body {
       </div>
       <div class="topbar-right">
         <select class="table-selector" id="tableSelector">
-          <option value=""> Pilih Meja</option>
+          <option value="">🪑 Pilih Meja</option>
           <option value="1">Meja 1</option>
           <option value="2">Meja 2</option>
           <option value="3">Meja 3</option>
@@ -791,7 +791,7 @@ body {
             <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
             BAYAR SEKARANG
           </button>
-          <button class="hold-btn" onclick="holdOrder()">️ HOLD ORDER</button>
+          <button class="hold-btn" onclick="holdOrder()">⏸️ HOLD ORDER</button>
         </div>
       </div>
     </div>
@@ -865,9 +865,9 @@ body {
     </div>
 
     <div class="page" id="pageSettings">
-      <h2 style="font-size:24px;font-weight:800;margin-bottom:24px;">️ Pengaturan</h2>
+      <h2 style="font-size:24px;font-weight:800;margin-bottom:24px;">⚙️ Pengaturan</h2>
       <div class="settings-section">
-        <h4> Informasi Restoran</h4>
+        <h4>🏪 Informasi Restoran</h4>
         <div class="form-group">
           <label class="form-label">Nama Restoran</label>
           <input type="text" class="form-input" id="setRestoName" value="BENHIL JAYA SEAFOOD ANYER">
@@ -899,7 +899,7 @@ body {
         </div>
       </div>
       <div class="settings-section">
-        <h4>️ Database</h4>
+        <h4>🗄️ Database</h4>
         <div class="setting-row">
           <div><strong>Export Data</strong><br><small style="color:var(--text-tertiary)">Download semua transaksi</small></div>
           <button class="btn btn-success" onclick="exportData()">📥 Export JSON</button>
@@ -1637,26 +1637,40 @@ function printReceipt(tx) {
     </div>
   `).join('');
 
-  const receiptHTML = `
+  // Buat iframe tersembunyi
+  let iframe = document.getElementById('printIframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = 'printIframe';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.visibility = 'hidden';
+    document.body.appendChild(iframe);
+  }
+
+  const receiptContent = `
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Struk ${tx.invoice}</title>
+      <title>Print Receipt</title>
       <style>
         @page { size: ${width} auto; margin: 0; }
         body { 
-          width: ${width}; 
-          margin: 0; 
-          padding: 3mm; 
-          font-family: 'Courier New', Courier, monospace; 
-          font-size: 11px; 
-          color: #000; 
-          background: #fff;
+          width: ${width};
+          margin: 0;
+          padding: 3mm;
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 11px;
+          color: #000;
         }
         .center { text-align: center; }
         .bold { font-weight: bold; }
         .line { border-top: 1px dashed #000; margin: 3px 0; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .row { display: flex; justify-content: space-between; }
       </style>
     </head>
     <body>
@@ -1678,40 +1692,33 @@ function printReceipt(tx) {
       <div class="center" style="margin-top:6px; font-size:10px;">
         <div class="bold">Terima Kasih!</div>
       </div>
+      <script>
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 100);
+        };
+      <\/script>
     </body>
     </html>
   `;
 
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-  iframe.style.visibility = 'hidden';
-  document.body.appendChild(iframe);
+  // Tulis content ke iframe
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(receiptContent);
+  doc.close();
 
-  const iframeDoc = iframe.contentWindow.document;
-  iframeDoc.open();
-  iframeDoc.write(receiptHTML);
-  iframeDoc.close();
-
-  iframe.onload = function() {
-    setTimeout(() => {
-      try {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-      } catch(e) {
-        console.error('Print error:', e);
-      }
-      setTimeout(() => {
-        if (document.body.contains(iframe)) {
-          document.body.removeChild(iframe);
-        }
-      }, 1500);
-    }, 300);
-  };
+  // Trigger print setelah iframe loaded
+  setTimeout(() => {
+    try {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    } catch(e) {
+      console.error('Print error:', e);
+      showToast('Gagal print. Coba manual Ctrl+P', 'error');
+    }
+  }, 300);
 }
 
 function reprintReceipt(invoice) {
