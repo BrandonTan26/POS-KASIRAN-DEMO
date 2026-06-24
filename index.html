@@ -562,7 +562,7 @@ body {
   cursor: pointer; transition: var(--transition);
 }
 .hold-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-.hold-card-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+.hold-card-header { display: flex; justify-content:space-between; margin-bottom: 12px; }
 .hold-card-title { font-size: 15px; font-weight: 700; }
 .hold-card-time { font-size: 12px; color: var(--text-tertiary); }
 .hold-card-items { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
@@ -644,6 +644,28 @@ body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .slide-up { animation: slideUp 0.4s ease; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+/* PRINT STYLES - FIXED */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #receiptPrint, #receiptPrint * {
+    visibility: visible !important;
+  }
+  #receiptPrint {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    display: block !important;
+    background: white !important;
+  }
+  @page {
+    margin: 0;
+    size: auto;
+  }
+}
 </style>
 </head>
 <body>
@@ -1048,6 +1070,9 @@ body {
     </div>
   </div>
 </div>
+
+<!-- Hidden receipt div untuk print -->
+<div id="receiptPrint" style="display:none; position:fixed; left:0; top:0; z-index:99999; background:white;"></div>
 
 <script>
 const SHEET_ID = '18SxUVyZMAl0WwTnziBr1aBnkPNWltZZ42OGznnFJ2wU';
@@ -1621,125 +1646,71 @@ function processPayment() {
   showToast(`Pembayaran berhasil! ${invoice}`, 'success');
 }
 
-// === FIXED PRINT FUNCTION - PRINT STRUK ONLY ===
+// === FIXED PRINT FUNCTION - LANGSUNG MUNCUL DIALOG PRINT ===
 function printReceipt(tx) {
   const size = settings.receiptSize || '58';
   const width = size === '80' ? '80mm' : '58mm';
-  const height = '297mm';
 
   const itemsHtml = tx.items.map(i => `
-    <div style="margin:2px 0; font-size:12px;">
+    <div style="margin:3px 0; font-size:11px;">
       <div style="font-weight:bold;">${i.name}</div>
       <div style="display:flex; justify-content:space-between;">
         <span>${i.qty} x ${formatRp(i.price)}</span>
         <span>${formatRp(i.qty * i.price)}</span>
       </div>
-      ${i.note ? `<div style="font-size:10px; font-style:italic; color:#666;">* ${i.note}</div>` : ''}
+      ${i.note ? `<div style="font-size:9px; font-style:italic;">* ${i.note}</div>` : ''}
     </div>
   `).join('');
 
-  const receiptContent = `
-    <div style="text-align:center; margin-bottom:8px;">
-      <div style="font-size:14px; font-weight:bold;">${settings.restoName}</div>
-      <div style="font-size:10px;">${settings.restoAddress}</div>
-      <div style="font-size:10px;">Telp: ${settings.restoPhone}</div>
-    </div>
-    <div style="border-top:1px dashed #000; margin:4px 0;"></div>
-    <div style="display:flex; justify-content:space-between; font-size:11px;">
-      <span>No: ${tx.invoice}</span>
-    </div>
-    <div style="display:flex; justify-content:space-between; font-size:11px;">
-      <span>${tx.dateStr} ${tx.timeStr}</span>
-    </div>
-    <div style="display:flex; justify-content:space-between; font-size:11px;">
-      <span>Meja: ${tx.table}</span>
-    </div>
-    <div style="border-top:1px dashed #000; margin:4px 0;"></div>
-    ${itemsHtml}
-    <div style="border-top:1px dashed #000; margin:4px 0;"></div>
-    <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-top:4px;">
-      <span>TOTAL</span>
-      <span>${formatRp(tx.total)}</span>
-    </div>
-    <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:2px;">
-      <span>Bayar (${tx.paymentMethod})</span>
-      <span>${formatRp(tx.cashReceived)}</span>
-    </div>
-    ${tx.paymentMethod === 'CASH' ? `
-    <div style="display:flex; justify-content:space-between; font-size:11px;">
-      <span>Kembali</span>
-      <span>${formatRp(tx.change)}</span>
-    </div>
-    ` : ''}
-    <div style="border-top:1px dashed #000; margin:4px 0;"></div>
-    <div style="text-align:center; margin-top:8px; font-size:11px;">
-      <div>Terima Kasih!</div>
-      <div>Selamat menikmati</div>
+  const receiptHTML = `
+    <div style="width:${width}; padding:3mm; font-family:'Courier New',monospace; font-size:11px; color:#000;">
+      <div style="text-align:center; margin-bottom:6px;">
+        <div style="font-size:13px; font-weight:bold;">${settings.restoName}</div>
+        <div style="font-size:9px;">${settings.restoAddress}</div>
+        <div style="font-size:9px;">Telp: ${settings.restoPhone}</div>
+      </div>
+      <div style="border-top:1px dashed #000; margin:3px 0;"></div>
+      <div style="font-size:10px;">No: ${tx.invoice}</div>
+      <div style="font-size:10px;">${tx.dateStr} ${tx.timeStr}</div>
+      <div style="font-size:10px;">Meja: ${tx.table}</div>
+      <div style="border-top:1px dashed #000; margin:3px 0;"></div>
+      ${itemsHtml}
+      <div style="border-top:1px dashed #000; margin:3px 0;"></div>
+      <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;">
+        <span>TOTAL</span>
+        <span>${formatRp(tx.total)}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:10px; margin-top:2px;">
+        <span>Bayar (${tx.paymentMethod})</span>
+        <span>${formatRp(tx.cashReceived)}</span>
+      </div>
+      ${tx.paymentMethod === 'CASH' ? `
+      <div style="display:flex; justify-content:space-between; font-size:10px;">
+        <span>Kembali</span>
+        <span>${formatRp(tx.change)}</span>
+      </div>
+      ` : ''}
+      <div style="border-top:1px dashed #000; margin:3px 0;"></div>
+      <div style="text-align:center; margin-top:6px; font-size:10px;">
+        <div>Terima Kasih!</div>
+      </div>
     </div>
   `;
 
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-  
-  document.body.appendChild(iframe);
-  
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Print Receipt</title>
-      <style>
-        @page { 
-          size: ${width} ${height}; 
-          margin: 0;
-        }
-        @media print {
-          body { 
-            width: ${width};
-            margin: 0;
-            padding: 3mm;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box;
-          }
-        }
-        body {
-          width: ${width};
-          padding: 3mm;
-          font-family: 'Courier New', monospace;
-          font-size: 11px;
-        }
-      </style>
-    </head>
-    <body>
-      ${receiptContent}
-      <script>
-        window.onload = function() {
-          setTimeout(function() {
-            window.print();
-            setTimeout(function() {
-              window.close();
-            }, 1000);
-          }, 250);
-        };
-      <\/script>
-    </body>
-    </html>
-  `);
-  doc.close();
+  // Tampilkan struk di hidden div
+  const receiptDiv = document.getElementById('receiptPrint');
+  receiptDiv.innerHTML = receiptHTML;
+  receiptDiv.style.display = 'block';
+
+  // Langsung panggil print - browser akan buka dialog print
+  setTimeout(() => {
+    window.print();
+    
+    // Sembunyikan lagi setelah print
+    setTimeout(() => {
+      receiptDiv.style.display = 'none';
+    }, 1000);
+  }, 300);
 }
 
 function reprintReceipt(invoice) {
