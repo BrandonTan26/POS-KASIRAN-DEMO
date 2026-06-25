@@ -620,6 +620,32 @@ body {
 }
 .toggle-switch.active::after { left: 24px; }
 
+/* Printer Status Indicator */
+.printer-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.printer-status.connected {
+  background: #d1fae5;
+  color: #065f46;
+}
+.printer-status.disconnected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.printer-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 @media (max-width: 1024px) {
   .cart-panel { width: 320px; min-width: 320px; }
   .product-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
@@ -644,6 +670,127 @@ body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .slide-up { animation: slideUp 0.4s ease; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ============================================
+   PRINT STYLES - THERMAL PRINTER OPTIMIZED
+   ============================================ */
+@media print {
+  @page {
+    margin: 0;
+    size: var(--print-width, 58mm) auto;
+  }
+  
+  body * {
+    visibility: hidden !important;
+  }
+  
+  #printArea, #printArea * {
+    visibility: visible !important;
+  }
+  
+  #printArea {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: var(--print-width, 58mm) !important;
+    max-width: var(--print-width, 58mm) !important;
+    margin: 0 !important;
+    padding: 2mm !important;
+    background: white !important;
+    color: black !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+  
+  #printArea .receipt-header {
+    text-align: center !important;
+    margin-bottom: 3mm !important;
+  }
+  
+  #printArea .receipt-header h2 {
+    font-size: 13px !important;
+    font-weight: bold !important;
+    margin: 0 !important;
+  }
+  
+  #printArea .receipt-header p {
+    font-size: 10px !important;
+    margin: 1mm 0 !important;
+  }
+  
+  #printArea .receipt-divider {
+    border-top: 1px dashed #000 !important;
+    margin: 2mm 0 !important;
+  }
+  
+  #printArea .receipt-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin: 1mm 0 !important;
+    font-size: 11px !important;
+  }
+  
+  #printArea .receipt-item {
+    margin: 2mm 0 !important;
+  }
+  
+  #printArea .receipt-item-name {
+    font-weight: bold !important;
+    font-size: 11px !important;
+  }
+  
+  #printArea .receipt-item-detail {
+    display: flex !important;
+    justify-content: space-between !important;
+    font-size: 10px !important;
+  }
+  
+  #printArea .receipt-total {
+    font-size: 12px !important;
+    font-weight: bold !important;
+    margin-top: 2mm !important;
+  }
+  
+  #printArea .receipt-footer {
+    text-align: center !important;
+    margin-top: 3mm !important;
+    font-size: 10px !important;
+  }
+}
+
+/* Print Preview Modal */
+.print-preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.print-preview-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 400px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.print-preview-content {
+  width: var(--print-width, 58mm);
+  max-width: var(--print-width, 58mm);
+  margin: 0 auto;
+  padding: 2mm;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  color: black;
+  background: white;
+}
 </style>
 </head>
 <body>
@@ -866,6 +1013,45 @@ body {
 
     <div class="page" id="pageSettings">
       <h2 style="font-size:24px;font-weight:800;margin-bottom:24px;">⚙️ Pengaturan</h2>
+      
+      <!-- Printer Settings Section -->
+      <div class="settings-section">
+        <h4>🖨️ Printer Settings</h4>
+        <div id="printerStatus" class="printer-status disconnected">
+          <div class="printer-status-dot"></div>
+          <span>Printer Tidak Terhubung</span>
+        </div>
+        
+        <div class="setting-row">
+          <div><strong>Nama Printer</strong><br><small style="color:var(--text-tertiary)">Nama printer Bluetooth</small></div>
+          <input type="text" class="form-input" id="printerName" placeholder="Sanpdie Printer" style="width:200px;" onchange="savePrinterSettings()">
+        </div>
+        
+        <div class="setting-row">
+          <div><strong>Ukuran Kertas</strong><br><small style="color:var(--text-tertiary)">Pilih ukuran thermal</small></div>
+          <select class="form-select" id="printerSize" style="width:150px;" onchange="savePrinterSettings()">
+            <option value="58">58mm</option>
+            <option value="80">80mm</option>
+          </select>
+        </div>
+        
+        <div class="setting-row">
+          <div><strong>Auto Print</strong><br><small style="color:var(--text-tertiary)">Cetak otomatis setelah bayar</small></div>
+          <div class="toggle-switch" id="autoPrintToggle" onclick="toggleAutoPrint()"></div>
+        </div>
+        
+        <div class="setting-row">
+          <div><strong>Print Preview</strong><br><small style="color:var(--text-tertiary)">Tampilkan preview sebelum cetak</small></div>
+          <div class="toggle-switch" id="printPreviewToggle" onclick="togglePrintPreview()"></div>
+        </div>
+        
+        <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="connectBluetoothPrinter()"> Connect Bluetooth</button>
+          <button class="btn btn-secondary" onclick="disconnectBluetoothPrinter()">❌ Disconnect</button>
+          <button class="btn btn-success" onclick="testPrint()">🧪 Test Print</button>
+        </div>
+      </div>
+      
       <div class="settings-section">
         <h4>🏪 Informasi Restoran</h4>
         <div class="form-group">
@@ -879,16 +1065,6 @@ body {
         <div class="form-group">
           <label class="form-label">Alamat</label>
           <textarea class="form-textarea" id="setRestoAddress">Anyer, Serang, Banten</textarea>
-        </div>
-      </div>
-      <div class="settings-section">
-        <h4>🖨️ Printer</h4>
-        <div class="setting-row">
-          <div><strong>Ukuran Struk</strong><br><small style="color:var(--text-tertiary)">Thermal / Bluetooth</small></div>
-          <select class="form-select" id="setReceiptSize" style="width:150px;" onchange="saveSettings()">
-            <option value="58">58mm</option>
-            <option value="80">80mm</option>
-          </select>
         </div>
       </div>
       <div class="settings-section">
@@ -906,7 +1082,7 @@ body {
         </div>
         <div class="setting-row">
           <div><strong>Reload Produk</strong><br><small style="color:var(--text-tertiary)">Ambil ulang dari Google Sheet</small></div>
-          <button class="btn btn-primary" onclick="loadProductsFromSheet()">🔄 Reload</button>
+          <button class="btn btn-primary" onclick="loadProductsFromSheet()"> Reload</button>
         </div>
         <div class="setting-row">
           <div><strong>Hapus Semua Data</strong><br><small style="color:var(--text-tertiary)">Reset localStorage</small></div>
@@ -917,10 +1093,28 @@ body {
   </main>
 </div>
 
+<!-- Print Area (Hidden) -->
+<div id="printArea" style="display:none;"></div>
+
+<!-- Print Preview Modal -->
+<div class="print-preview-overlay" id="printPreviewModal" style="display:none;">
+  <div class="print-preview-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="font-size:18px; font-weight:700;">️ Print Preview</h3>
+      <button class="btn btn-secondary" onclick="closePrintPreview()">✕ Tutup</button>
+    </div>
+    <div id="printPreviewContent"></div>
+    <div style="display:flex; gap:8px; margin-top:16px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="executePrint()">🖨️ Cetak Sekarang</button>
+      <button class="btn btn-secondary" onclick="closePrintPreview()">Batal</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="paymentModal">
   <div class="modal" style="max-width:560px;">
     <div class="modal-header">
-      <h3>💳 Pembayaran</h3>
+      <h3> Pembayaran</h3>
       <button class="modal-close" onclick="closeModal('paymentModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="modal-body">
@@ -1059,19 +1253,30 @@ let transactions = JSON.parse(localStorage.getItem('bjs_transactions') || '[]');
 let holdOrders = JSON.parse(localStorage.getItem('bjs_holdOrders') || '[]');
 let members = JSON.parse(localStorage.getItem('bjs_members') || '[]');
 let settings = JSON.parse(localStorage.getItem('bjs_settings') || '{}');
+let printerSettings = JSON.parse(localStorage.getItem('bjs_printerSettings') || '{}');
 let selectedPayment = 'CASH';
 let currentNoteIndex = -1;
 let activeCategory = 'SEMUA';
 let transactionCounter = parseInt(localStorage.getItem('bjs_txCounter') || '0');
+let bluetoothDevice = null;
+let bluetoothCharacteristic = null;
 
 const defaultSettings = {
   restoName: 'BENHIL JAYA SEAFOOD ANYER',
   restoPhone: '081906370107',
   restoAddress: 'Anyer, Serang, Banten',
-  receiptSize: '58',
   darkMode: false
 };
 settings = { ...defaultSettings, ...settings };
+
+const defaultPrinterSettings = {
+  printerName: 'Sanpdie Printer',
+  paperSize: '58',
+  autoPrint: true,
+  printPreview: false,
+  connected: false
+};
+printerSettings = { ...defaultPrinterSettings, ...printerSettings };
 
 const categoryIcons = {
   'IKAN': '🐟',
@@ -1114,6 +1319,323 @@ function showToast(msg, type='info') {
   c.appendChild(t);
   setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(100%)'; setTimeout(()=>t.remove(),300); }, 3000);
 }
+
+// ============================================
+// PRINTER SETTINGS FUNCTIONS
+// ============================================
+
+function savePrinterSettings() {
+  printerSettings.printerName = document.getElementById('printerName').value || 'Sanpdie Printer';
+  printerSettings.paperSize = document.getElementById('printerSize').value;
+  localStorage.setItem('bjs_printerSettings', JSON.stringify(printerSettings));
+  updatePrintCSS();
+  showToast('Pengaturan printer disimpan', 'success');
+}
+
+function toggleAutoPrint() {
+  printerSettings.autoPrint = !printerSettings.autoPrint;
+  document.getElementById('autoPrintToggle').classList.toggle('active', printerSettings.autoPrint);
+  localStorage.setItem('bjs_printerSettings', JSON.stringify(printerSettings));
+  showToast(`Auto Print ${printerSettings.autoPrint ? 'ON' : 'OFF'}`, 'info');
+}
+
+function togglePrintPreview() {
+  printerSettings.printPreview = !printerSettings.printPreview;
+  document.getElementById('printPreviewToggle').classList.toggle('active', printerSettings.printPreview);
+  localStorage.setItem('bjs_printerSettings', JSON.stringify(printerSettings));
+  showToast(`Print Preview ${printerSettings.printPreview ? 'ON' : 'OFF'}`, 'info');
+}
+
+function updatePrinterStatus() {
+  const statusEl = document.getElementById('printerStatus');
+  if (printerSettings.connected && bluetoothDevice) {
+    statusEl.className = 'printer-status connected';
+    statusEl.innerHTML = `<div class="printer-status-dot"></div><span>Printer Connected: ${printerSettings.printerName}</span>`;
+  } else {
+    statusEl.className = 'printer-status disconnected';
+    statusEl.innerHTML = `<div class="printer-status-dot"></div><span>Printer Tidak Terhubung</span>`;
+  }
+}
+
+function updatePrintCSS() {
+  const width = printerSettings.paperSize === '80' ? '80mm' : '58mm';
+  document.documentElement.style.setProperty('--print-width', width);
+}
+
+// ============================================
+// WEB BLUETOOTH API FUNCTIONS
+// ============================================
+
+async function connectBluetoothPrinter() {
+  if (!navigator.bluetooth) {
+    showToast('Web Bluetooth tidak didukung di browser ini. Gunakan window.print() sebagai fallback.', 'warning');
+    return;
+  }
+
+  try {
+    showToast('Mencari printer Bluetooth...', 'info');
+    
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ services: ['battery_service'] }],
+      optionalServices: ['battery_service']
+    });
+
+    bluetoothDevice = device;
+    
+    device.addEventListener('gattserverdisconnected', () => {
+      printerSettings.connected = false;
+      bluetoothDevice = null;
+      bluetoothCharacteristic = null;
+      updatePrinterStatus();
+      showToast('Printer terputus', 'warning');
+    });
+
+    const server = await device.gatt.connect();
+    const service = await server.getPrimaryService('battery_service');
+    bluetoothCharacteristic = await service.getCharacteristic('battery_level');
+    
+    printerSettings.connected = true;
+    localStorage.setItem('bjs_printerSettings', JSON.stringify(printerSettings));
+    updatePrinterStatus();
+    showToast('Printer Bluetooth terhubung!', 'success');
+    
+  } catch (error) {
+    console.error('Bluetooth connection error:', error);
+    showToast('Gagal terhubung ke printer: ' + error.message, 'error');
+  }
+}
+
+async function disconnectBluetoothPrinter() {
+  if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+    bluetoothDevice.gatt.disconnect();
+  }
+  printerSettings.connected = false;
+  bluetoothDevice = null;
+  bluetoothCharacteristic = null;
+  localStorage.setItem('bjs_printerSettings', JSON.stringify(printerSettings));
+  updatePrinterStatus();
+  showToast('Printer Bluetooth diputus', 'info');
+}
+
+async function sendToPrinter(data) {
+  if (!bluetoothDevice || !bluetoothCharacteristic) {
+    throw new Error('Printer tidak terhubung');
+  }
+
+  try {
+    const encoder = new TextEncoder();
+    const encodedData = encoder.encode(data);
+    await bluetoothCharacteristic.writeValue(encodedData);
+  } catch (error) {
+    console.error('Send to printer error:', error);
+    throw error;
+  }
+}
+
+// ============================================
+// PRINT FUNCTIONS
+// ============================================
+
+function printCSS() {
+  const width = printerSettings.paperSize === '80' ? '80mm' : '58mm';
+  return `
+    @media print {
+      @page {
+        size: ${width} auto;
+        margin: 0;
+      }
+      body {
+        width: ${width};
+        max-width: ${width};
+        margin: 0;
+        padding: 2mm;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 11px;
+        color: #000;
+        background: #fff;
+      }
+    }
+  `;
+}
+
+function generateReceiptHTML(tx) {
+  const width = printerSettings.paperSize === '80' ? '80mm' : '58mm';
+  
+  const itemsHtml = tx.items.map(i => `
+    <div class="receipt-item">
+      <div class="receipt-item-name">${i.name}</div>
+      <div class="receipt-item-detail">
+        <span>${i.qty} x ${formatRp(i.price)}</span>
+        <span>${formatRp(i.qty * i.price)}</span>
+      </div>
+      ${i.note ? `<div style="font-size:9px; font-style:italic;">* ${i.note}</div>` : ''}
+    </div>
+  `).join('');
+
+  return `
+    <div style="width:${width}; max-width:${width}; margin:0 auto; padding:2mm; font-family:'Courier New',monospace; font-size:11px; color:#000;">
+      <div class="receipt-header">
+        <h2>${settings.restoName}</h2>
+        <p>${settings.restoAddress}</p>
+        <p>Telp: ${settings.restoPhone}</p>
+      </div>
+      <div class="receipt-divider"></div>
+      <div class="receipt-row"><span>No: ${tx.invoice}</span></div>
+      <div class="receipt-row"><span>${tx.dateStr} ${tx.timeStr}</span></div>
+      <div class="receipt-row"><span>Meja: ${tx.table}</span></div>
+      <div class="receipt-divider"></div>
+      ${itemsHtml}
+      <div class="receipt-divider"></div>
+      <div class="receipt-row receipt-total"><span>TOTAL</span><span>${formatRp(tx.total)}</span></div>
+      <div class="receipt-divider"></div>
+      <div class="receipt-row"><span>Bayar (${tx.paymentMethod})</span><span>${formatRp(tx.cashReceived)}</span></div>
+      ${tx.paymentMethod === 'CASH' ? `<div class="receipt-row"><span>Kembali</span><span>${formatRp(tx.change)}</span></div>` : ''}
+      <div class="receipt-divider"></div>
+      <div class="receipt-footer">
+        <div>Terima Kasih!</div>
+        <div>Selamat Menikmati</div>
+      </div>
+    </div>
+  `;
+}
+
+async function printReceipt(tx) {
+  const receiptHTML = generateReceiptHTML(tx);
+  
+  // Jika ada printer Bluetooth terhubung
+  if (printerSettings.connected && bluetoothDevice) {
+    try {
+      // Convert HTML ke text untuk printer thermal
+      const textContent = `
+${settings.restoName}
+${settings.restoAddress}
+Telp: ${settings.restoPhone}
+--------------------------------
+No: ${tx.invoice}
+${tx.dateStr} ${tx.timeStr}
+Meja: ${tx.table}
+--------------------------------
+${tx.items.map(i => `${i.name}\n${i.qty} x ${formatRp(i.price)} = ${formatRp(i.qty * i.price)}`).join('\n')}
+--------------------------------
+TOTAL: ${formatRp(tx.total)}
+Bayar (${tx.paymentMethod}): ${formatRp(tx.cashReceived)}
+${tx.paymentMethod === 'CASH' ? `Kembali: ${formatRp(tx.change)}` : ''}
+--------------------------------
+Terima Kasih!
+      `.trim();
+      
+      await sendToPrinter(textContent);
+      showToast('Struk berhasil dicetak ke printer Bluetooth!', 'success');
+      return;
+    } catch (error) {
+      console.error('Bluetooth print error:', error);
+      showToast('Gagal cetak via Bluetooth, menggunakan fallback...', 'warning');
+    }
+  }
+  
+  // Fallback: window.print()
+  if (printerSettings.printPreview) {
+    showPrintPreview(receiptHTML);
+  } else {
+    executePrintWithHTML(receiptHTML);
+  }
+}
+
+function showPrintPreview(receiptHTML) {
+  const previewContent = document.getElementById('printPreviewContent');
+  previewContent.innerHTML = receiptHTML;
+  document.getElementById('printPreviewModal').style.display = 'flex';
+}
+
+function closePrintPreview() {
+  document.getElementById('printPreviewModal').style.display = 'none';
+}
+
+function executePrint() {
+  const receiptHTML = document.getElementById('printPreviewContent').innerHTML;
+  closePrintPreview();
+  executePrintWithHTML(receiptHTML);
+}
+
+function executePrintWithHTML(receiptHTML) {
+  const printArea = document.getElementById('printArea');
+  printArea.innerHTML = receiptHTML;
+  printArea.style.display = 'block';
+  
+  // Set CSS variable untuk ukuran print
+  const width = printerSettings.paperSize === '80' ? '80mm' : '58mm';
+  document.documentElement.style.setProperty('--print-width', width);
+  
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      printArea.style.display = 'none';
+      printArea.innerHTML = '';
+    }, 500);
+  }, 100);
+}
+
+async function testPrint() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('id-ID');
+  const timeStr = now.toLocaleTimeString('id-ID');
+  
+  const testHTML = `
+    <div style="width:${printerSettings.paperSize === '80' ? '80mm' : '58mm'}; max-width:${printerSettings.paperSize === '80' ? '80mm' : '58mm'}; margin:0 auto; padding:2mm; font-family:'Courier New',monospace; font-size:11px; color:#000;">
+      <div class="receipt-header">
+        <h2>${settings.restoName}</h2>
+        <p>Test Print</p>
+        <p>${dateStr} ${timeStr}</p>
+      </div>
+      <div class="receipt-divider"></div>
+      <div style="text-align:center; margin:3mm 0;">
+        <p>ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
+        <p>1234567890</p>
+      </div>
+      <div class="receipt-divider"></div>
+      <div style="text-align:center; margin:3mm 0;">
+        <p style="font-size:13px; font-weight:bold;">QR TEST</p>
+      </div>
+      <div class="receipt-divider"></div>
+      <div class="receipt-footer">
+        <p>Terima Kasih</p>
+      </div>
+    </div>
+  `;
+  
+  if (printerSettings.connected && bluetoothDevice) {
+    try {
+      const textContent = `
+${settings.restoName}
+Test Print
+${dateStr} ${timeStr}
+--------------------------------
+ABCDEFGHIJKLMNOPQRSTUVWXYZ
+1234567890
+--------------------------------
+QR TEST
+--------------------------------
+Terima Kasih
+      `.trim();
+      
+      await sendToPrinter(textContent);
+      showToast('Test print berhasil!', 'success');
+    } catch (error) {
+      showToast('Test print gagal: ' + error.message, 'error');
+    }
+  } else {
+    showPrintPreview(testHTML);
+  }
+}
+
+function reprintReceipt(invoice) {
+  const tx = transactions.find(t => t.invoice === invoice);
+  if (tx) printReceipt(tx);
+}
+
+// ============================================
+// EXISTING FUNCTIONS (UNCHANGED)
+// ============================================
 
 const SAMPLE_PRODUCTS = [
   { KODE_PRODUK: 'IK001', KATEGORI: 'IKAN', NAMA_MENU: 'KAKAP SAOS PADANG', HARGA: 14000, SATUAN: 'ONS' },
@@ -1610,7 +2132,13 @@ function processPayment() {
   }
 
   closeModal('paymentModal');
-  printReceipt(transaction);
+  
+  // Auto print jika diaktifkan
+  if (printerSettings.autoPrint) {
+    printReceipt(transaction);
+  } else {
+    showToast(`Pembayaran berhasil! ${invoice}. Klik Test Print untuk mencetak.`, 'success');
+  }
 
   cart = [];
   document.getElementById('discountPercent').value = '';
@@ -1619,111 +2147,6 @@ function processPayment() {
   renderCart();
 
   showToast(`Pembayaran berhasil! ${invoice}`, 'success');
-}
-
-// === PRINT FUNCTION - SIMPLE & RELIABLE ===
-function printReceipt(tx) {
-  const size = settings.receiptSize || '58';
-  const width = size === '80' ? '80mm' : '58mm';
-
-  const itemsHtml = tx.items.map(i => `
-    <div style="margin:3px 0; font-size:11px;">
-      <div style="font-weight:bold;">${i.name}</div>
-      <div style="display:flex; justify-content:space-between;">
-        <span>${i.qty} x ${formatRp(i.price)}</span>
-        <span>${formatRp(i.qty * i.price)}</span>
-      </div>
-      ${i.note ? `<div style="font-size:9px; font-style:italic;">* ${i.note}</div>` : ''}
-    </div>
-  `).join('');
-
-  const receiptHTML = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Struk ${tx.invoice}</title>
-      <style>
-        @media print {
-          @page { size: ${width} auto; margin: 0; }
-          body { margin: 0; padding: 3mm; }
-          .no-print { display: none; }
-        }
-        body { 
-          width: ${width};
-          margin: 0 auto;
-          padding: 3mm;
-          font-family: 'Courier New', Courier, monospace;
-          font-size: 11px;
-          color: #000;
-          background: #fff;
-        }
-        .center { text-align: center; }
-        .bold { font-weight: bold; }
-        .line { border-top: 1px dashed #000; margin: 3px 0; }
-        .row { display: flex; justify-content: space-between; }
-        .btn-print {
-          position: fixed;
-          top: 10px;
-          right: 10px;
-          padding: 10px 20px;
-          background: #3b82f6;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 14px;
-          cursor: pointer;
-          z-index: 9999;
-        }
-      </style>
-    </head>
-    <body>
-      <button class="btn-print no-print" onclick="window.print()">🖨️ CETAK STRUK</button>
-      <div class="center bold" style="font-size:13px;">${settings.restoName}</div>
-      <div class="center" style="font-size:9px;">${settings.restoAddress}</div>
-      <div class="center" style="font-size:9px;">Telp: ${settings.restoPhone}</div>
-      <div class="line"></div>
-      <div style="font-size:10px;">No: ${tx.invoice}</div>
-      <div style="font-size:10px;">${tx.dateStr} ${tx.timeStr}</div>
-      <div style="font-size:10px;">Meja: ${tx.table}</div>
-      <div class="line"></div>
-      ${itemsHtml}
-      <div class="line"></div>
-      <div class="row bold" style="font-size:12px;"><span>TOTAL</span><span>${formatRp(tx.total)}</span></div>
-      <div class="line"></div>
-      <div class="row" style="font-size:10px;"><span>Bayar (${tx.paymentMethod})</span><span>${formatRp(tx.cashReceived)}</span></div>
-      ${tx.paymentMethod === 'CASH' ? `<div class="row" style="font-size:10px;"><span>Kembali</span><span>${formatRp(tx.change)}</span></div>` : ''}
-      <div class="line"></div>
-      <div class="center" style="margin-top:6px; font-size:10px;">
-        <div class="bold">Terima Kasih!</div>
-      </div>
-      <script>
-        // Auto trigger print setelah halaman load
-        window.addEventListener('load', function() {
-          setTimeout(function() {
-            window.print();
-          }, 500);
-        });
-      <\/script>
-    </body>
-    </html>
-  `;
-
-  // Buka di tab/window baru
-  const printWindow = window.open('', '_blank', 'width=400,height=600');
-  if (printWindow) {
-    printWindow.document.write(receiptHTML);
-    printWindow.document.close();
-  } else {
-    // Fallback: tampilkan alert jika popup diblokir
-    alert('Popup diblokir! Izinkan popup untuk website ini agar bisa print.');
-  }
-}
-
-function reprintReceipt(invoice) {
-  const tx = transactions.find(t => t.invoice === invoice);
-  if (tx) printReceipt(tx);
 }
 
 function openSplitBill() {
@@ -1893,7 +2316,6 @@ function saveSettings() {
   settings.restoName = document.getElementById('setRestoName')?.value || settings.restoName;
   settings.restoPhone = document.getElementById('setRestoPhone')?.value || settings.restoPhone;
   settings.restoAddress = document.getElementById('setRestoAddress')?.value || settings.restoAddress;
-  settings.receiptSize = document.getElementById('setReceiptSize')?.value || '58';
   localStorage.setItem('bjs_settings', JSON.stringify(settings));
   updateCartTotals();
 }
@@ -1902,12 +2324,16 @@ function loadSettingsUI() {
   document.getElementById('setRestoName').value = settings.restoName;
   document.getElementById('setRestoPhone').value = settings.restoPhone;
   document.getElementById('setRestoAddress').value = settings.restoAddress;
-  document.getElementById('setReceiptSize').value = settings.receiptSize;
+  document.getElementById('printerName').value = printerSettings.printerName;
+  document.getElementById('printerSize').value = printerSettings.paperSize;
+  document.getElementById('autoPrintToggle').classList.toggle('active', printerSettings.autoPrint);
+  document.getElementById('printPreviewToggle').classList.toggle('active', printerSettings.printPreview);
+  updatePrinterStatus();
   applyTheme();
 }
 
 function exportData() {
-  const data = { transactions, holdOrders, members, settings, exportDate: new Date().toISOString() };
+  const data = { transactions, holdOrders, members, settings, printerSettings, exportDate: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1937,6 +2363,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
     document.getElementById('cartPanel')?.classList.remove('open');
+    closePrintPreview();
   }
   if (e.key === 'F2') { e.preventDefault(); openPaymentModal(); }
   if (e.key === 'F4') { e.preventDefault(); holdOrder(); }
@@ -1958,6 +2385,7 @@ async function init() {
   updateClock();
   checkResponsive();
   updateHoldBadge();
+  updatePrintCSS();
   bar.style.width = '40%';
 
   await loadProductsFromSheet();
